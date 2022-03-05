@@ -10,14 +10,10 @@
 	--accent-color: transparent;
 
 	--default-indent: 12px;
-
-	font-family: 'Roboto', Arial, Helvetica, sans-serif;
 }
 
 * {
 	box-sizing: border-box;
-	font-size: 16px;
-	line-height: 18px;
 	margin: 0;
 	padding: 0;
 
@@ -26,8 +22,13 @@
 	}
 }
 
+html {
+	font-size: 16px;
+}
+
 body {
 	background-color: var(--bg-global-color);
+	font-family: 'Roboto', Arial, Helvetica, sans-serif;
 	height: 100vh;
 	width: 100vw;
 }
