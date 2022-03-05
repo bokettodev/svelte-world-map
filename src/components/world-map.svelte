@@ -21,43 +21,67 @@
 	});
 
 	function loadWorldGeoJson(): void {
-		json('./static/world-110m.geojson').then((geoJson: GeoJSON.FeatureCollection): void => {
+		json('world-110m.geojson').then((geoJson: GeoJSON.FeatureCollection): void => {
 			worldGeoJson = geoJson;
 			drawMap();
 		});
 	}
 
 	function drawMap(): void {
-		initMercatorProjectionAndPathGeo(worldGeoJson);
+		mercatorProjection = geoMercator();
+		setMercatorProjectionYawAngle(-11);
+		setMercatorProjectionSize();
+		setPathGenerator();
 	}
 
-	function initMercatorProjectionAndPathGeo(geoJson: GeoJSON.FeatureCollection): void {
-		mercatorProjection = geoMercator()
-			.fitSize([windowWidth, windowHeight], geoJson)
-			.rotate([-11, 0]);
+	function updateMapSize(): void {
+		setMercatorProjectionSize();
+		reassignPathGenerator();
+	}
+
+	function setMercatorProjectionYawAngle(yawAngle: number): void {
+		mercatorProjection.rotate([yawAngle, 0]);
+	}
+
+	function setMercatorProjectionSize(): void {
+		mercatorProjection.fitSize([windowWidth, windowHeight], worldGeoJson);
+	}
+
+	function setPathGenerator(): void {
 		pathGenerator = geoPath(mercatorProjection);
 	}
 
+	function reassignPathGenerator(): void {
+		pathGenerator = pathGenerator;
+	}
+
 	function onMouseDown(event: MouseEvent): void {
+		const isPrimaryButtonPressed = event.button === 0;
+		if (!isPrimaryButtonPressed) {
+			return;
+		}
+
 		previousMouseEvent = event;
 		isMouseDragging = true;
 	}
 
 	function onMouseMove(event: MouseEvent): void {
-		if (isMouseDragging) {
-			const diff = event.x - previousMouseEvent.x;
-			if (!diff) {
-				return;
-			}
-
-			const ratio = windowWidth / 360;
-			let [yawAngle] = mercatorProjection.rotate();
-			yawAngle += diff / ratio;
-
-			mercatorProjection.rotate([yawAngle, 0]);
-			pathGenerator = pathGenerator;
-			previousMouseEvent = event;
+		if (!isMouseDragging) {
+			return;
 		}
+
+		const horizontalShiftPx = event.x - previousMouseEvent.x;
+		if (!horizontalShiftPx) {
+			return;
+		}
+		previousMouseEvent = event;
+
+		const pixelsToRotateRatio = windowWidth / 360;
+		let [yawAngle] = mercatorProjection.rotate();
+		yawAngle += horizontalShiftPx / pixelsToRotateRatio;
+
+		setMercatorProjectionYawAngle(yawAngle);
+		reassignPathGenerator();
 	}
 
 	function onMouseUp(): void {
@@ -68,7 +92,7 @@
 <svelte:window
 	bind:innerHeight={windowHeight}
 	bind:innerWidth={windowWidth}
-	on:resize={debounce(drawMap, windowResizeDebounceMs)}
+	on:resize={debounce(updateMapSize, windowResizeDebounceMs)}
 />
 
 {#if worldGeoJson?.features?.length}
