@@ -3,7 +3,9 @@
 	import { draw } from 'svelte/transition';
 	import { quadInOut } from 'svelte/easing';
 	import { json, geoPath, geoMercator, type GeoProjection, type GeoPath } from 'd3';
+	import * as topojson from 'topojson-client';
 	import { debounce } from '../functions/debounce';
+	import type { TopoJson } from '../types/topo-json.type';
 
 	const windowResizeDebounceMs = 100;
 	let windowHeight: number;
@@ -12,7 +14,7 @@
 	let isMouseDragging = false;
 	let previousMouseEvent: MouseEvent;
 
-	let worldGeoJson: GeoJSON.FeatureCollection;
+	let worldData: GeoJSON.FeatureCollection<GeoJSON.Geometry, {}>;
 	let mercatorProjection: GeoProjection;
 	let pathGenerator: GeoPath;
 
@@ -21,8 +23,8 @@
 	});
 
 	function loadWorldGeoJson(): void {
-		json('world-110m.geojson').then((geoJson: GeoJSON.FeatureCollection): void => {
-			worldGeoJson = geoJson;
+		json('countries-110m.topo.json').then((geoJson: TopoJson): void => {
+			worldData = topojson.feature(geoJson, geoJson.objects.countries);
 			drawMap();
 		});
 	}
@@ -44,7 +46,7 @@
 	}
 
 	function setMercatorProjectionSize(): void {
-		mercatorProjection.fitSize([windowWidth, windowHeight], worldGeoJson);
+		mercatorProjection.fitSize([windowWidth, windowHeight], worldData);
 	}
 
 	function setPathGenerator(): void {
@@ -92,18 +94,15 @@
 <svelte:window
 	bind:innerHeight={windowHeight}
 	bind:innerWidth={windowWidth}
+	on:mousedown={onMouseDown}
+	on:mousemove={onMouseMove}
+	on:mouseup={onMouseUp}
 	on:resize={debounce(updateMapSize, windowResizeDebounceMs)}
 />
 
-{#if worldGeoJson?.features?.length}
-	<svg
-		height="100%"
-		width="100%"
-		on:mousedown={onMouseDown}
-		on:mousemove={onMouseMove}
-		on:mouseup={onMouseUp}
-	>
-		{#each worldGeoJson.features as geoJsonFeature}
+{#if worldData?.features?.length}
+	<svg height="100%" width="100%">
+		{#each worldData.features as geoJsonFeature}
 			<path
 				transition:draw={{ duration: 3000, delay: 0, easing: quadInOut }}
 				d={pathGenerator(geoJsonFeature)}

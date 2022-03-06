@@ -1,5 +1,7 @@
 <script lang="ts">
-	import WorldMap from '../components/world-map.svelte';
+	import WorldMapMercatorSvg from '../components/world-map-mercator-svg.svelte';
+	import WorldMapOrthographicCanvas from '../components/world-map-orthographic-canvas.svelte';
 </script>
 
-<WorldMap />
+<!-- <WorldMapMercatorSvg /> -->
+<WorldMapOrthographicCanvas />
