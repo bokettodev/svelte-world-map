@@ -5,6 +5,7 @@
 	import { json, geoPath, geoMercator, type GeoProjection, type GeoPath } from 'd3';
 	import * as topojson from 'topojson-client';
 	import { debounce } from '../functions/debounce';
+	import type { WorldData } from '../types/world-data.type';
 	import type { TopoJson } from '../types/topo-json.type';
 
 	const windowResizeDebounceMs = 100;
@@ -14,17 +15,17 @@
 	let isMouseDragging = false;
 	let previousMouseEvent: MouseEvent;
 
-	let worldData: GeoJSON.FeatureCollection<GeoJSON.Geometry, {}>;
+	let worldData: WorldData;
 	let mercatorProjection: GeoProjection;
 	let pathGenerator: GeoPath;
 
 	onMount((): void => {
-		loadWorldGeoJson();
+		loadWorldTopoJson();
 	});
 
-	function loadWorldGeoJson(): void {
-		json('countries-110m.topo.json').then((geoJson: TopoJson): void => {
-			worldData = topojson.feature(geoJson, geoJson.objects.countries);
+	function loadWorldTopoJson(): void {
+		json('countries-110m.topo.json').then((topoJson: TopoJson): void => {
+			worldData = topojson.feature(topoJson, topoJson.objects.countries);
 			drawMap();
 		});
 	}
@@ -102,11 +103,8 @@
 
 {#if worldData?.features?.length}
 	<svg height="100%" width="100%">
-		{#each worldData.features as geoJsonFeature}
-			<path
-				transition:draw={{ duration: 3000, delay: 0, easing: quadInOut }}
-				d={pathGenerator(geoJsonFeature)}
-			/>
+		{#each worldData.features as feature}
+			<path in:draw={{ duration: 3000, delay: 0, easing: quadInOut }} d={pathGenerator(feature)} />
 		{/each}
 	</svg>
 {/if}
