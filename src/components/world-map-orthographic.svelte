@@ -1,18 +1,20 @@
 <script lang="ts">
-	import { beforeUpdate, onMount } from 'svelte';
+	import { beforeUpdate } from 'svelte';
 	import { debounce } from '../functions/debounce';
 	import { Orthographic } from '../classes/orthographic.class';
 	import type { WorldDataset } from '../classes/world-data.class';
 
 	export let worldDataset: WorldDataset;
+	export let height: number;
+	export let width: number;
+
 	let isOrthographicInited = false;
 	let lowResolutionLoaded = false;
 	let middleResolutionLoaded = false;
 
 	const orthographic = new Orthographic();
+	const resizeDebounceMs = 100;
 	let canvas: HTMLCanvasElement;
-	let windowHeight: number;
-	let windowWidth: number;
 
 	beforeUpdate((): void => {
 		if (!worldDataset || !canvas) {
@@ -38,22 +40,15 @@
 			orthographic.init(canvas);
 		}
 		orthographic.drawMap();
-		console.log(orthographic);
 	}
 
 	function onResize(): void {
 		debounce(() => {
-			orthographic.container.height = windowHeight;
-			orthographic.container.width = windowWidth;
 			orthographic.drawMap();
-		}, orthographic.container.resizeDebounceMs);
+		}, resizeDebounceMs);
 	}
 </script>
 
-<svelte:window
-	bind:innerHeight={windowHeight}
-	bind:innerWidth={windowWidth}
-	on:resize={() => onResize()}
-/>
+<svelte:window on:resize={() => onResize()} />
 
-<canvas bind:this={canvas} height={windowHeight} width={windowWidth} />
+<canvas bind:this={canvas} {height} {width} />

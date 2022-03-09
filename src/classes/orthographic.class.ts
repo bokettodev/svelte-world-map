@@ -6,12 +6,6 @@ import type { WorldDataset } from './world-data.class';
 export class Orthographic {
 	data: WorldDataset;
 
-	container: {
-		resizeDebounceMs: number;
-		height: number;
-		width: number;
-	};
-
 	private d3: {
 		projection: GeoProjection;
 		canvasContext: CanvasRenderingContext2D;
@@ -38,12 +32,6 @@ export class Orthographic {
 		const projection = geoOrthographic();
 		const canvasContext = canvas.getContext('2d');
 		this.d3 = { projection, canvasContext, pathGenerator: geoPath(projection, canvasContext) };
-
-		this.container = {
-			resizeDebounceMs: 100,
-			height: this.d3.canvasContext.canvas.height,
-			width: this.d3.canvasContext.canvas.width
-		};
 	}
 
 	private initDragging(): void {
@@ -82,7 +70,7 @@ export class Orthographic {
 	};
 
 	private renderCanvas(data: WorldData): void {
-		this.d3.canvasContext.clearRect(0, 0, this.container.width, this.container.height);
+		this.d3.canvasContext.clearRect(0, 0, this.width, this.height);
 
 		this.d3.canvasContext.beginPath();
 		this.d3.pathGenerator({ type: 'Sphere' });
@@ -105,6 +93,14 @@ export class Orthographic {
 	}
 
 	private fitProjectionSize(data: WorldData): void {
-		this.d3.projection.fitSize([this.container.width, this.container.height], data);
+		this.d3.projection.fitSize([this.width, this.height], data);
+	}
+
+	private get height(): number {
+		return this.d3.canvasContext.canvas.height;
+	}
+
+	private get width(): number {
+		return this.d3.canvasContext.canvas.width;
 	}
 }
