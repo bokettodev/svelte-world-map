@@ -5,16 +5,20 @@
 	import type { WorldDataset } from '../classes/world-data.class';
 
 	export let worldDataset: WorldDataset;
-	export let height: number;
 	export let width: number;
+	export let height: number;
 
 	let isOrthographicInited = false;
 	let lowResolutionLoaded = false;
 	let middleResolutionLoaded = false;
 
 	const orthographic = new Orthographic();
-	const resizeDebounceMs = 100;
+	const resizeDebounceMs = 300;
 	let canvas: HTMLCanvasElement;
+
+	const onResize = debounce(() => {
+		orthographic.drawMap();
+	}, resizeDebounceMs);
 
 	beforeUpdate((): void => {
 		if (!worldDataset || !canvas) {
@@ -41,14 +45,8 @@
 		}
 		orthographic.drawMap();
 	}
-
-	function onResize(): void {
-		debounce(() => {
-			orthographic.drawMap();
-		}, resizeDebounceMs);
-	}
 </script>
 
-<svelte:window on:resize={() => onResize()} />
+<svelte:window on:resize={onResize} />
 
-<canvas bind:this={canvas} {height} {width} />
+<canvas bind:this={canvas} {width} {height} />

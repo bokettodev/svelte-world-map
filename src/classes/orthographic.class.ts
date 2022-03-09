@@ -96,11 +96,13 @@ export class Orthographic {
 		this.d3.projection.fitSize([this.width, this.height], data);
 	}
 
+	private get width(): number {
+		return this.d3.canvasContext.canvas.width;
+	}
+
 	private get height(): number {
 		return this.d3.canvasContext.canvas.height;
 	}
 
-	private get width(): number {
-		return this.d3.canvasContext.canvas.width;
-	}
+	
 }

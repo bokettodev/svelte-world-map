@@ -8,8 +8,8 @@
 	import type { TopoJson } from '../types/topo-json.type';
 
 	let mercator = false;
-	let windowHeight: number;
-	let windowWidth: number;
+	let width: number;
+	let height: number;
 	const worldDataset = new WorldDataset();
 
 	onMount((): void => {
@@ -30,15 +30,13 @@
 	}
 </script>
 
-<svelte:window bind:innerHeight={windowHeight} bind:innerWidth={windowWidth} />
-
-<div>
+<div bind:clientWidth={width} bind:clientHeight={height}>
 	<input type="checkbox" bind:checked={mercator} />
 
 	{#if mercator}
 		<WorldMapMercatorSvg />
 	{:else}
-		<WorldMapOrthographic {worldDataset} height={windowHeight} width={windowWidth} />
+		<WorldMapOrthographic {worldDataset} {width} {height} />
 	{/if}
 </div>
 
