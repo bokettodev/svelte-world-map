@@ -102,6 +102,7 @@ export class Orthographic {
 
 			if (!hoveredCountry) {
 				this.drawCountriesBoundaries();
+				this.drawEarthBoundary();
 			}
 		}
 
@@ -110,7 +111,9 @@ export class Orthographic {
 			this.hoveredCountry.color = COUNTRY_COLOR.HOVERED;
 			this.hoveredCountry.isHovered = true;
 			this.drawCountry(this.hoveredCountry);
+
 			this.drawCountriesBoundaries();
+			this.drawEarthBoundary();
 		} else {
 			this.hoveredCountry = null;
 		}
@@ -145,7 +148,7 @@ export class Orthographic {
 		);
 
 		this.projection.rotate(versor.rotation(matrix));
-		this.renderCanvas();
+		window.requestAnimationFrame(this.renderCanvas);
 	};
 
 	private onDraggingEnd = (): void => {
@@ -153,7 +156,7 @@ export class Orthographic {
 		this.renderCanvas();
 	};
 
-	private renderCanvas(): void {
+	private renderCanvas = (): void => {
 		this.canvasContext.clearRect(0, 0, this.width, this.height);
 
 		// Water
@@ -163,7 +166,6 @@ export class Orthographic {
 		this.canvasContext.fill();
 		this.canvasContext.closePath();
 
-		// Countries
 		this.countries.forEach((country) => {
 			this.drawCountry(country);
 		});
@@ -171,14 +173,8 @@ export class Orthographic {
 		if (!this.isDragging) {
 			this.drawCountriesBoundaries();
 		}
-
-		// Earth circle boundary
-		this.canvasContext.beginPath();
-		this.pathGeneratorWithContext({ type: 'Sphere' });
-		this.canvasContext.strokeStyle = 'darkslategray';
-		this.canvasContext.stroke();
-		this.canvasContext.closePath();
-	}
+		this.drawEarthBoundary();
+	};
 
 	private drawCountry(country: CanvasCountry): void {
 		const targetFeature = this.isDragging
@@ -219,6 +215,14 @@ export class Orthographic {
 			this.canvasContext.fill(targetPath);
 			this.canvasContext.closePath();
 		});
+	}
+
+	private drawEarthBoundary(): void {
+		this.canvasContext.beginPath();
+		this.pathGeneratorWithContext({ type: 'Sphere' });
+		this.canvasContext.strokeStyle = 'darkslategray';
+		this.canvasContext.stroke();
+		this.canvasContext.closePath();
 	}
 
 	private fitProjectionSize(): void {
