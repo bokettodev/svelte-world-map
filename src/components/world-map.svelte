@@ -8,24 +8,17 @@
 
 	let width: number;
 	let height: number;
-	const worldDataset = new WorldDataset();
+	let worldDataset: WorldDataset;
 
 	onMount((): void => {
-		loadWorldTopoJsonLowResolution();
+		Promise.all([json('countries-110m.topo.json'), json('countries-50m.topo.json')]).then(
+			([topoJson110, topoJson50]: [TopoJson, TopoJson]) => {
+				const lowResolution = topojson.feature(topoJson110, topoJson110.objects.countries);
+				const middleResolution = topojson.feature(topoJson50, topoJson50.objects.countries);
+				worldDataset = new WorldDataset(lowResolution, middleResolution);
+			}
+		);
 	});
-
-	function loadWorldTopoJsonLowResolution(): void {
-		json('countries-110m.topo.json').then((topoJson: TopoJson): void => {
-			worldDataset.lowResolution = topojson.feature(topoJson, topoJson.objects.countries);
-			loadWorldTopoJsonMiddleResolution();
-		});
-	}
-
-	function loadWorldTopoJsonMiddleResolution(): void {
-		json('countries-50m.topo.json').then((topoJson: TopoJson): void => {
-			worldDataset.middleResolution = topojson.feature(topoJson, topoJson.objects.countries);
-		});
-	}
 </script>
 
 <div bind:clientWidth={width} bind:clientHeight={height}>

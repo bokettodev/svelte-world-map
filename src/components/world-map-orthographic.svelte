@@ -8,41 +8,37 @@
 	export let width: number;
 	export let height: number;
 
-	let isOrthographicInited = false;
-	let lowResolutionLoaded = false;
-	let middleResolutionLoaded = false;
-
 	const orthographic = new Orthographic();
-	const resizeDebounceMs = 300;
 	let canvas: HTMLCanvasElement;
+
+	let orthographicInited = false;
+	let mapInited = false;
+	const resizeDebounceMs = 300;
 
 	const onResize = debounce(() => {
 		orthographic.drawMap();
 	}, resizeDebounceMs);
 
 	beforeUpdate((): void => {
-		if (!worldDataset || !canvas) {
-			return;
-		}
-		orthographic.data = worldDataset;
-
-		if (!middleResolutionLoaded && worldDataset.middleResolution) {
-			middleResolutionLoaded = true;
-			drawMap();
-			return;
-		}
-
-		if (!lowResolutionLoaded && worldDataset.lowResolution) {
-			lowResolutionLoaded = true;
-			drawMap();
-		}
+		initMap();
 	});
 
-	function drawMap(): void {
-		if (!isOrthographicInited) {
-			isOrthographicInited = true;
-			orthographic.init(canvas);
+	function initOrthographic(): void {
+		if (orthographicInited || !canvas) {
+			return;
 		}
+		orthographicInited = true;
+		orthographic.init(canvas);
+	}
+
+	function initMap(): void {
+		initOrthographic();
+		if (!orthographicInited || mapInited || !worldDataset) {
+			return;
+		}
+
+		mapInited = true;
+		orthographic.setWorldSataset(worldDataset);
 		orthographic.drawMap();
 	}
 </script>

@@ -1,8 +1,7 @@
 import type { WorldData } from '../types/world-data.type';
 
 export class WorldDataset {
-	lowResolution: WorldData;
-	middleResolution: WorldData;
+	constructor(public lowResolution: WorldData, public middleResolution: WorldData) {}
 
 	get minResolution(): WorldData {
 		return this.lowResolution || this.middleResolution;
