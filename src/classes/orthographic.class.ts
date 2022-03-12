@@ -1,21 +1,8 @@
 import { drag, geoOrthographic, geoPath, select, type GeoPath, type GeoProjection } from 'd3';
+import { COUNTRY_COLOR } from '../enums/country-color.enum';
+import type { CanvasCountry } from '../interfaces/canvas-country.interface';
 import versor from 'versor';
 import type { WorldDataset } from './world-data.class';
-
-enum COUNTRY_COLOR {
-	DEFAULT = 'darkslategray',
-	HOVERED = 'green'
-}
-
-interface CanvasCountry {
-	featureLowResolution: GeoJSON.Feature;
-	featureHighResolution: GeoJSON.Feature;
-	pathLowResolution: Path2D;
-	pathHighResolution: Path2D;
-	name: string;
-	color: string;
-	isHovered: boolean;
-}
 
 export class Orthographic {
 	private worldDataset: WorldDataset;
@@ -42,8 +29,8 @@ export class Orthographic {
 
 	setWorldSataset(worldDataset: WorldDataset): void {
 		if (
-			!worldDataset?.minResolution?.features?.length ||
-			!worldDataset?.maxResolution?.features?.length
+			!worldDataset?.lowResolution?.features?.length ||
+			!worldDataset?.highResolution?.features?.length
 		) {
 			return;
 		}

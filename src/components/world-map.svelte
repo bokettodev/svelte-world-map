@@ -14,8 +14,8 @@
 		Promise.all([json('countries-110m.topo.json'), json('countries-50m.topo.json')]).then(
 			([topoJson110, topoJson50]: [TopoJson, TopoJson]) => {
 				const lowResolution = topojson.feature(topoJson110, topoJson110.objects.countries);
-				const middleResolution = topojson.feature(topoJson50, topoJson50.objects.countries);
-				worldDataset = new WorldDataset(lowResolution, middleResolution);
+				const highResolution = topojson.feature(topoJson50, topoJson50.objects.countries);
+				worldDataset = new WorldDataset(lowResolution, highResolution);
 			}
 		);
 	});
