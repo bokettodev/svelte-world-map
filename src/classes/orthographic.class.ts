@@ -1,8 +1,14 @@
-import { drag, geoOrthographic, geoPath, select, type GeoPath, type GeoProjection } from 'd3';
+import { drag, geoOrthographic, geoPath, select, zoom, type GeoPath, type GeoProjection } from 'd3';
 import { COUNTRY_COLOR } from '../enums/country-color.enum';
 import type { CanvasCountry } from '../interfaces/canvas-country.interface';
 import versor from 'versor';
 import type { WorldDataset } from './world-data.class';
+
+interface ZoomTransform {
+	k: number;
+	x: number;
+	y: number;
+}
 
 export class Orthographic {
 	private worldDataset: WorldDataset;
@@ -14,6 +20,7 @@ export class Orthographic {
 	private pathGenerator: GeoPath;
 	private pathGeneratorWithContext: GeoPath;
 	private isDragging = false;
+	private isZooming = false;
 
 	private versorOnDragStart: {
 		cartesian: [number, number, number];
@@ -21,10 +28,14 @@ export class Orthographic {
 		rotate: [number, number, number];
 	};
 
+	r = 1.5;
+	lastTransform: ZoomTransform;
+
 	init(canvas: HTMLCanvasElement): void {
 		this.initVariables(canvas);
-		this.initHoverListener();
-		this.initDraggingListeners();
+		// this.initDraggingListeners();
+		this.initZoomListener();
+		// this.initHoverListener();
 	}
 
 	setWorldSataset(worldDataset: WorldDataset): void {
@@ -65,17 +76,42 @@ export class Orthographic {
 		this.pathGeneratorWithContext = geoPath(this.projection, this.canvasContext);
 	}
 
+	private initZoomListener(): void {
+		select(this.canvasContext.canvas).call(
+			zoom()
+				.scaleExtent([1, 8])
+				.on('start', () => (this.isZooming = true))
+				.on('zoom', ({ transform }: { transform: ZoomTransform }) => {
+					const height = this.height * (transform.k - 1) * -1;
+
+					if (transform.y < height) {
+						transform.y = height;
+					} else if (transform.y > 0) {
+						transform.y = 0;
+					}
+
+					this.lastTransform = transform;
+					this.renderCanvas();
+				})
+				.on('end', () => {
+					this.isZooming = false;
+					this.renderCanvas();
+				})
+		);
+	}
+
 	private initHoverListener(): void {
 		select(this.canvasContext.canvas).on('mousemove', this.onMouseMove);
 	}
 
 	private onMouseMove = (event: MouseEvent): void => {
-		if (this.isDragging || !this.countries?.length) {
+		if (this.isDragging || this.isZooming || !this.countries?.length) {
 			return;
 		}
 
 		const hoveredCountry = this.countries.find((country) => {
-			const targetPath = this.isDragging ? country.pathLowResolution : country.pathHighResolution;
+			const targetPath =
+				this.isDragging || this.isZooming ? country.pathLowResolution : country.pathHighResolution;
 			return this.canvasContext.isPointInPath(targetPath, event.offsetX, event.offsetY);
 		});
 		if (this.hoveredCountry === hoveredCountry) {
@@ -144,7 +180,13 @@ export class Orthographic {
 	};
 
 	private renderCanvas = (): void => {
+		this.canvasContext.save();
 		this.canvasContext.clearRect(0, 0, this.width, this.height);
+
+		if (this.lastTransform) {
+			this.canvasContext.translate(this.lastTransform.x, this.lastTransform.y);
+			this.canvasContext.scale(this.lastTransform.k, this.lastTransform.k);
+		}
 
 		// Water
 		this.canvasContext.beginPath();
@@ -157,22 +199,24 @@ export class Orthographic {
 			this.drawCountry(country);
 		});
 
-		if (!this.isDragging) {
+		if (!this.isDragging && !this.isZooming) {
 			this.drawCountriesBoundaries();
 		}
 		this.drawEarthBoundary();
+		this.canvasContext.restore();
 	};
 
 	private drawCountry(country: CanvasCountry): void {
-		const targetFeature = this.isDragging
-			? country.featureLowResolution
-			: country.featureHighResolution;
+		const targetFeature =
+			this.isDragging || this.isZooming
+				? country.featureLowResolution
+				: country.featureHighResolution;
 		if (!targetFeature) {
 			return;
 		}
 		let targetPath: Path2D;
 
-		if (this.isDragging) {
+		if (this.isDragging || this.isZooming) {
 			targetPath = country.pathLowResolution = country.featureLowResolution
 				? new Path2D(this.pathGenerator(country.featureLowResolution))
 				: null;
@@ -190,7 +234,8 @@ export class Orthographic {
 
 	private drawCountriesBoundaries(): void {
 		this.countries.forEach((country) => {
-			const targetPath = this.isDragging ? country.pathLowResolution : country.pathHighResolution;
+			const targetPath =
+				this.isDragging || this.isZooming ? country.pathLowResolution : country.pathHighResolution;
 			if (!targetPath) {
 				return;
 			}
@@ -213,9 +258,10 @@ export class Orthographic {
 	}
 
 	private fitProjectionSize(): void {
-		const targetData = this.isDragging
-			? this.worldDataset.minResolution
-			: this.worldDataset.maxResolution;
+		const targetData =
+			this.isDragging || this.isZooming
+				? this.worldDataset.minResolution
+				: this.worldDataset.maxResolution;
 		if (!targetData) {
 			return;
 		}
