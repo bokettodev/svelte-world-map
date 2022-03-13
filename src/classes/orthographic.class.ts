@@ -33,7 +33,7 @@ export class Orthographic {
 
 	init(canvas: HTMLCanvasElement): void {
 		this.initVariables(canvas);
-		// this.initDraggingListeners();
+		this.initDraggingListeners();
 		this.initZoomListener();
 		// this.initHoverListener();
 	}
@@ -90,6 +90,14 @@ export class Orthographic {
 						transform.y = 0;
 					}
 
+					const width = this.width * (transform.k - 1) * -1;
+
+					if (transform.x < width) {
+						transform.x = width;
+					} else if (transform.x > 0) {
+						transform.x = 0;
+					}
+
 					this.lastTransform = transform;
 					this.renderCanvas();
 				})
@@ -105,13 +113,14 @@ export class Orthographic {
 	}
 
 	private onMouseMove = (event: MouseEvent): void => {
-		if (this.isDragging || this.isZooming || !this.countries?.length) {
+		if (this.mapProcessing || !this.countries?.length) {
 			return;
 		}
 
 		const hoveredCountry = this.countries.find((country) => {
-			const targetPath =
-				this.isDragging || this.isZooming ? country.pathLowResolution : country.pathHighResolution;
+			const targetPath = this.mapProcessing
+				? country.pathLowResolution
+				: country.pathHighResolution;
 			return this.canvasContext.isPointInPath(targetPath, event.offsetX, event.offsetY);
 		});
 		if (this.hoveredCountry === hoveredCountry) {
@@ -199,7 +208,7 @@ export class Orthographic {
 			this.drawCountry(country);
 		});
 
-		if (!this.isDragging && !this.isZooming) {
+		if (!this.mapProcessing) {
 			this.drawCountriesBoundaries();
 		}
 		this.drawEarthBoundary();
@@ -207,16 +216,15 @@ export class Orthographic {
 	};
 
 	private drawCountry(country: CanvasCountry): void {
-		const targetFeature =
-			this.isDragging || this.isZooming
-				? country.featureLowResolution
-				: country.featureHighResolution;
+		const targetFeature = this.mapProcessing
+			? country.featureLowResolution
+			: country.featureHighResolution;
 		if (!targetFeature) {
 			return;
 		}
 		let targetPath: Path2D;
 
-		if (this.isDragging || this.isZooming) {
+		if (this.mapProcessing) {
 			targetPath = country.pathLowResolution = country.featureLowResolution
 				? new Path2D(this.pathGenerator(country.featureLowResolution))
 				: null;
@@ -234,8 +242,9 @@ export class Orthographic {
 
 	private drawCountriesBoundaries(): void {
 		this.countries.forEach((country) => {
-			const targetPath =
-				this.isDragging || this.isZooming ? country.pathLowResolution : country.pathHighResolution;
+			const targetPath = this.mapProcessing
+				? country.pathLowResolution
+				: country.pathHighResolution;
 			if (!targetPath) {
 				return;
 			}
@@ -258,10 +267,9 @@ export class Orthographic {
 	}
 
 	private fitProjectionSize(): void {
-		const targetData =
-			this.isDragging || this.isZooming
-				? this.worldDataset.minResolution
-				: this.worldDataset.maxResolution;
+		const targetData = this.mapProcessing
+			? this.worldDataset.minResolution
+			: this.worldDataset.maxResolution;
 		if (!targetData) {
 			return;
 		}
@@ -274,5 +282,9 @@ export class Orthographic {
 
 	private get height(): number {
 		return this.canvasContext.canvas.height;
+	}
+
+	private get mapProcessing(): boolean {
+		return this.isDragging || this.isZooming;
 	}
 }
