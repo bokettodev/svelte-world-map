@@ -1,14 +1,12 @@
 import { drag, geoOrthographic, geoPath, select, zoom, type GeoPath, type GeoProjection } from 'd3';
+import versor from 'versor';
 import { COUNTRY_COLOR } from '../enums/country-color.enum';
 import type { CanvasCountry } from '../interfaces/canvas-country.interface';
-import versor from 'versor';
 import type { WorldDataset } from './world-data.class';
-
-interface ZoomTransform {
-	k: number;
-	x: number;
-	y: number;
-}
+import type { ZoomTransform } from '../interfaces/zoom-transform.interface';
+import { applyZoomTransform } from '../functions/apply-zoom-transform';
+import { fitProjectionSize } from '../functions/fit-projection-size';
+import { restrictTransformByBoundaries } from '../functions/restrict-transform';
 
 export class Orthographic {
 	private worldDataset: WorldDataset;
@@ -19,8 +17,9 @@ export class Orthographic {
 	private canvasContext: CanvasRenderingContext2D;
 	private pathGenerator: GeoPath;
 	private pathGeneratorWithContext: GeoPath;
-	private isDragging = false;
+	private lastZoomTransform: ZoomTransform;
 	private isZooming = false;
+	private isDragging = false;
 
 	private versorOnDragStart: {
 		cartesian: [number, number, number];
@@ -28,14 +27,11 @@ export class Orthographic {
 		rotate: [number, number, number];
 	};
 
-	r = 1.5;
-	lastTransform: ZoomTransform;
-
 	init(canvas: HTMLCanvasElement): void {
 		this.initVariables(canvas);
 		this.initDraggingListeners();
 		this.initZoomListener();
-		// this.initHoverListener();
+		this.initHoverListener();
 	}
 
 	setWorldSataset(worldDataset: WorldDataset): void {
@@ -65,7 +61,7 @@ export class Orthographic {
 	}
 
 	drawMap(): void {
-		this.fitProjectionSize();
+		fitProjectionSize(this.projection, this.width, this.height, this.worldDataset.maxResolution);
 		this.renderCanvas();
 	}
 
@@ -82,23 +78,11 @@ export class Orthographic {
 				.scaleExtent([1, 8])
 				.on('start', () => (this.isZooming = true))
 				.on('zoom', ({ transform }: { transform: ZoomTransform }) => {
-					const height = this.height * (transform.k - 1) * -1;
-
-					if (transform.y < height) {
-						transform.y = height;
-					} else if (transform.y > 0) {
-						transform.y = 0;
-					}
-
-					const width = this.width * (transform.k - 1) * -1;
-
-					if (transform.x < width) {
-						transform.x = width;
-					} else if (transform.x > 0) {
-						transform.x = 0;
-					}
-
-					this.lastTransform = transform;
+					this.lastZoomTransform = restrictTransformByBoundaries(
+						transform,
+						this.width,
+						this.height
+					);
 					this.renderCanvas();
 				})
 				.on('end', () => {
@@ -117,13 +101,21 @@ export class Orthographic {
 			return;
 		}
 
+		this.canvasContext.save();
+		applyZoomTransform(this.canvasContext, this.lastZoomTransform);
+
+		const canvasRect = this.canvasContext.canvas.getBoundingClientRect();
+		const offsetY = event.offsetY - canvasRect.y;
+		const offsetX = event.offsetX - canvasRect.x;
+
 		const hoveredCountry = this.countries.find((country) => {
 			const targetPath = this.mapProcessing
 				? country.pathLowResolution
 				: country.pathHighResolution;
-			return this.canvasContext.isPointInPath(targetPath, event.offsetX, event.offsetY);
+			return this.canvasContext.isPointInPath(targetPath, offsetX, offsetY);
 		});
 		if (this.hoveredCountry === hoveredCountry) {
+			this.canvasContext.restore();
 			return;
 		}
 
@@ -149,6 +141,8 @@ export class Orthographic {
 		} else {
 			this.hoveredCountry = null;
 		}
+
+		this.canvasContext.restore();
 	};
 
 	private initDraggingListeners(): void {
@@ -191,11 +185,7 @@ export class Orthographic {
 	private renderCanvas = (): void => {
 		this.canvasContext.save();
 		this.canvasContext.clearRect(0, 0, this.width, this.height);
-
-		if (this.lastTransform) {
-			this.canvasContext.translate(this.lastTransform.x, this.lastTransform.y);
-			this.canvasContext.scale(this.lastTransform.k, this.lastTransform.k);
-		}
+		applyZoomTransform(this.canvasContext, this.lastZoomTransform);
 
 		// Water
 		this.canvasContext.beginPath();
@@ -264,16 +254,6 @@ export class Orthographic {
 		this.canvasContext.strokeStyle = 'darkslategray';
 		this.canvasContext.stroke();
 		this.canvasContext.closePath();
-	}
-
-	private fitProjectionSize(): void {
-		const targetData = this.mapProcessing
-			? this.worldDataset.minResolution
-			: this.worldDataset.maxResolution;
-		if (!targetData) {
-			return;
-		}
-		this.projection.fitSize([this.width, this.height], targetData);
 	}
 
 	private get width(): number {

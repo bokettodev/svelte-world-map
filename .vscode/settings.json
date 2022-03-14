@@ -1,0 +1,4 @@
+{
+	"typescript.preferences.importModuleSpecifier": "relative",
+	"files.eol": "\n"
+}
