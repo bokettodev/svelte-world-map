@@ -17,7 +17,7 @@ export class Orthographic {
 	private canvasContext: CanvasRenderingContext2D;
 	private pathGenerator: GeoPath;
 	private pathGeneratorWithContext: GeoPath;
-	private lastZoomTransform: ZoomTransform;
+	private lastZoomTransform: ZoomTransform = { k: 1, x: 0, y: 0 };
 	private isZooming = false;
 	private isDragging = false;
 
