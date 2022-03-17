@@ -1,12 +1,19 @@
-import { drag, geoOrthographic, geoPath, select, zoom, type GeoPath, type GeoProjection } from 'd3';
+import {
+	geoOrthographic,
+	geoPath,
+	pointer,
+	select,
+	zoom,
+	type D3ZoomEvent,
+	type GeoPath,
+	type GeoProjection
+} from 'd3';
 import versor from 'versor';
 import { COUNTRY_COLOR } from '../enums/country-color.enum';
 import type { CanvasCountry } from '../interfaces/canvas-country.interface';
 import type { WorldDataset } from './world-data.class';
-import type { ZoomTransform } from '../interfaces/zoom-transform.interface';
-import { applyZoomTransform } from '../functions/apply-zoom-transform';
 import { fitProjectionSize } from '../functions/fit-projection-size';
-import { restrictTransformByBoundaries } from '../functions/restrict-transform';
+import type { WorldData } from '../types/world-data.type';
 
 export class Orthographic {
 	private worldDataset: WorldDataset;
@@ -17,7 +24,6 @@ export class Orthographic {
 	private canvasContext: CanvasRenderingContext2D;
 	private pathGenerator: GeoPath;
 	private pathGeneratorWithContext: GeoPath;
-	private lastZoomTransform: ZoomTransform = { k: 1, x: 0, y: 0 };
 	private isZooming = false;
 	private isDragging = false;
 
@@ -29,8 +35,7 @@ export class Orthographic {
 
 	init(canvas: HTMLCanvasElement): void {
 		this.initVariables(canvas);
-		this.initDraggingListeners();
-		this.initZoomListener();
+		this.initPanAndZoomListener();
 		this.initHoverListener();
 	}
 
@@ -62,7 +67,7 @@ export class Orthographic {
 
 	drawMap(): void {
 		fitProjectionSize(this.projection, this.width, this.height, this.worldDataset.maxResolution);
-		this.renderCanvas();
+		window.requestAnimationFrame(this.renderCanvas);
 	}
 
 	private initVariables(canvas: HTMLCanvasElement): void {
@@ -72,22 +77,41 @@ export class Orthographic {
 		this.pathGeneratorWithContext = geoPath(this.projection, this.canvasContext);
 	}
 
-	private initZoomListener(): void {
+	private initPanAndZoomListener(): void {
 		select(this.canvasContext.canvas).call(
 			zoom()
 				.scaleExtent([1, 8])
-				.on('start', () => (this.isZooming = true))
-				.on('zoom', ({ transform }: { transform: ZoomTransform }) => {
-					this.lastZoomTransform = restrictTransformByBoundaries(
-						transform,
-						this.width,
-						this.height
+				.on('start', (event: D3ZoomEvent<HTMLCanvasElement, WorldData>) => {
+					this.isZooming = true;
+
+					const rotate = this.projection.rotate();
+					this.versorOnDragStart = {
+						rotate,
+						cartesian: versor.cartesian(
+							this.projection.invert(pointer(event.sourceEvent, this.canvasContext.canvas))
+						),
+						matrix: versor(rotate)
+					};
+				})
+				.on('zoom', (event: D3ZoomEvent<HTMLCanvasElement, WorldData>) => {
+					this.projection.scale(event.transform.k * (this.height / 2));
+
+					const cartesian = versor.cartesian(
+						this.projection
+							.rotate(this.versorOnDragStart.rotate)
+							.invert(pointer(event.sourceEvent, this.canvasContext.canvas))
 					);
-					this.renderCanvas();
+					const matrix = versor.multiply(
+						this.versorOnDragStart.matrix,
+						versor.delta(this.versorOnDragStart.cartesian, cartesian)
+					);
+
+					this.projection.rotate(versor.rotation(matrix));
+					window.requestAnimationFrame(this.renderCanvas);
 				})
 				.on('end', () => {
 					this.isZooming = false;
-					this.renderCanvas();
+					window.requestAnimationFrame(this.renderCanvas);
 				})
 		);
 	}
@@ -101,9 +125,6 @@ export class Orthographic {
 			return;
 		}
 
-		this.canvasContext.save();
-		applyZoomTransform(this.canvasContext, this.lastZoomTransform);
-
 		const canvasRect = this.canvasContext.canvas.getBoundingClientRect();
 		const offsetY = event.offsetY - canvasRect.y;
 		const offsetX = event.offsetX - canvasRect.x;
@@ -115,7 +136,6 @@ export class Orthographic {
 			return this.canvasContext.isPointInPath(targetPath, offsetX, offsetY);
 		});
 		if (this.hoveredCountry === hoveredCountry) {
-			this.canvasContext.restore();
 			return;
 		}
 
@@ -141,51 +161,10 @@ export class Orthographic {
 		} else {
 			this.hoveredCountry = null;
 		}
-
-		this.canvasContext.restore();
-	};
-
-	private initDraggingListeners(): void {
-		select(this.canvasContext.canvas).call(
-			drag()
-				.on('start', this.onDraggingStart)
-				.on('drag', this.onDragging)
-				.on('end', this.onDraggingEnd)
-		);
-	}
-
-	private onDraggingStart = (event: DragEvent): void => {
-		this.isDragging = true;
-		const rotate = this.projection.rotate();
-		this.versorOnDragStart = {
-			rotate,
-			cartesian: versor.cartesian(this.projection.invert([event.x, event.y])),
-			matrix: versor(rotate)
-		};
-	};
-
-	private onDragging = (event: DragEvent): void => {
-		const cartesian = versor.cartesian(
-			this.projection.rotate(this.versorOnDragStart.rotate).invert([event.x, event.y])
-		);
-		const matrix = versor.multiply(
-			this.versorOnDragStart.matrix,
-			versor.delta(this.versorOnDragStart.cartesian, cartesian)
-		);
-
-		this.projection.rotate(versor.rotation(matrix));
-		window.requestAnimationFrame(this.renderCanvas);
-	};
-
-	private onDraggingEnd = (): void => {
-		this.isDragging = false;
-		this.renderCanvas();
 	};
 
 	private renderCanvas = (): void => {
-		this.canvasContext.save();
 		this.canvasContext.clearRect(0, 0, this.width, this.height);
-		applyZoomTransform(this.canvasContext, this.lastZoomTransform);
 
 		// Water
 		this.canvasContext.beginPath();
@@ -202,7 +181,6 @@ export class Orthographic {
 			this.drawCountriesBoundaries();
 		}
 		this.drawEarthBoundary();
-		this.canvasContext.restore();
 	};
 
 	private drawCountry(country: CanvasCountry): void {
