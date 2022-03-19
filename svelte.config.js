@@ -7,10 +7,12 @@ const config = {
 	kit: {
 		adapter: adapter({
 			pages: 'docs',
-			assets: 'docs'
+			assets: 'docs',
+			fallback: null,
+			precompress: false
 		}),
-		paths: {
-			base: '/svelte-world-map'
+		prerender: {
+			default: true
 		}
 	}
 };
