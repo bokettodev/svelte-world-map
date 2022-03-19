@@ -8,7 +8,10 @@ const config = {
 		adapter: adapter({
 			pages: 'docs',
 			assets: 'docs'
-		})
+		}),
+		paths: {
+			base: '/svelte-world-map'
+		}
 	}
 };
 
