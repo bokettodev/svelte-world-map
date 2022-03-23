@@ -38,7 +38,7 @@
 		}
 
 		mapInited = true;
-		orthographic.setWorldSataset(worldDataset);
+		orthographic.setWorldDataset(worldDataset);
 		orthographic.drawMap();
 	}
 </script>

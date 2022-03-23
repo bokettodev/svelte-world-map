@@ -24,8 +24,7 @@ export class Orthographic {
 	private canvasContext: CanvasRenderingContext2D;
 	private pathGenerator: GeoPath;
 	private pathGeneratorWithContext: GeoPath;
-	private isZooming = false;
-	private isDragging = false;
+	private processing = false;
 
 	private versorOnDragStart: {
 		cartesian: [number, number, number];
@@ -39,7 +38,7 @@ export class Orthographic {
 		this.initHoverListener();
 	}
 
-	setWorldSataset(worldDataset: WorldDataset): void {
+	setWorldDataset(worldDataset: WorldDataset): void {
 		if (
 			!worldDataset?.lowResolution?.features?.length ||
 			!worldDataset?.highResolution?.features?.length
@@ -68,7 +67,7 @@ export class Orthographic {
 	drawMap(): void {
 		fitProjectionSize(this.projection, this.width, this.height, this.worldDataset.maxResolution);
 		this.setCountriesPaths();
-		window.requestAnimationFrame(this.renderCanvas);
+		this.renderCanvas();
 	}
 
 	private initVariables(canvas: HTMLCanvasElement): void {
@@ -83,7 +82,7 @@ export class Orthographic {
 			zoom()
 				.scaleExtent([1, 8])
 				.on('start', (event: D3ZoomEvent<HTMLCanvasElement, WorldData>) => {
-					this.isZooming = true;
+					this.processing = true;
 
 					const rotate = this.projection.rotate();
 					this.versorOnDragStart = {
@@ -109,12 +108,12 @@ export class Orthographic {
 
 					this.projection.rotate(versor.rotation(matrix));
 					this.setCountriesPaths();
-					window.requestAnimationFrame(this.renderCanvas);
+					this.renderCanvas();
 				})
 				.on('end', () => {
-					this.isZooming = false;
+					this.processing = false;
 					this.setCountriesPaths();
-					window.requestAnimationFrame(this.renderCanvas);
+					this.renderCanvas();
 				})
 		);
 	}
@@ -124,7 +123,7 @@ export class Orthographic {
 	}
 
 	private onMouseMove = (event: MouseEvent): void => {
-		if (this.mapProcessing || !this.countries?.length) {
+		if (this.processing || !this.countries?.length) {
 			return;
 		}
 
@@ -133,9 +132,7 @@ export class Orthographic {
 		const offsetX = event.offsetX - canvasRect.x;
 
 		const hoveredCountry = this.countries.find((country) => {
-			const targetPath = this.mapProcessing
-				? country.pathLowResolution
-				: country.pathHighResolution;
+			const targetPath = this.processing ? country.pathLowResolution : country.pathHighResolution;
 			return this.canvasContext.isPointInPath(targetPath, offsetX, offsetY);
 		});
 		if (this.hoveredCountry === hoveredCountry) {
@@ -159,7 +156,7 @@ export class Orthographic {
 	};
 
 	private setCountriesPaths(): void {
-		if (this.mapProcessing) {
+		if (this.processing) {
 			this.countries.forEach((country) => {
 				country.pathLowResolution = country.featureLowResolution
 					? new Path2D(this.pathGenerator(country.featureLowResolution))
@@ -172,17 +169,19 @@ export class Orthographic {
 		}
 	}
 
-	private renderCanvas = (): void => {
-		this.canvasContext.clearRect(0, 0, this.width, this.height);
+	private renderCanvas(): void {
+		window.requestAnimationFrame(() => {
+			this.canvasContext.clearRect(0, 0, this.width, this.height);
 
-		this.drawWater();
+			this.drawWater();
 
-		this.countries.forEach((country) => {
-			this.drawCountry(country);
+			this.countries.forEach((country) => {
+				this.drawCountry(country);
+			});
+
+			this.drawEarthBoundary();
 		});
-
-		this.drawEarthBoundary();
-	};
+	}
 
 	private drawWater(): void {
 		this.canvasContext.beginPath();
@@ -193,13 +192,10 @@ export class Orthographic {
 	}
 
 	private drawCountry(country: CanvasCountry): void {
-		const targetFeature = this.mapProcessing
-			? country.featureLowResolution
-			: country.featureHighResolution;
-		if (!targetFeature) {
+		const targetPath = this.processing ? country.pathLowResolution : country.pathHighResolution;
+		if (!targetPath) {
 			return;
 		}
-		const targetPath = this.mapProcessing ? country.pathLowResolution : country.pathHighResolution;
 
 		this.canvasContext.beginPath();
 		this.canvasContext.strokeStyle = 'white';
@@ -223,9 +219,5 @@ export class Orthographic {
 
 	private get height(): number {
 		return this.canvasContext.canvas.height;
-	}
-
-	private get mapProcessing(): boolean {
-		return this.isDragging || this.isZooming;
 	}
 }
