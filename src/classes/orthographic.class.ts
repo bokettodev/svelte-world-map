@@ -67,6 +67,7 @@ export class Orthographic {
 
 	drawMap(): void {
 		fitProjectionSize(this.projection, this.width, this.height, this.worldDataset.maxResolution);
+		this.setCountriesPaths();
 		window.requestAnimationFrame(this.renderCanvas);
 	}
 
@@ -107,10 +108,12 @@ export class Orthographic {
 					);
 
 					this.projection.rotate(versor.rotation(matrix));
+					this.setCountriesPaths();
 					window.requestAnimationFrame(this.renderCanvas);
 				})
 				.on('end', () => {
 					this.isZooming = false;
+					this.setCountriesPaths();
 					window.requestAnimationFrame(this.renderCanvas);
 				})
 		);
@@ -142,46 +145,52 @@ export class Orthographic {
 		if (this.hoveredCountry) {
 			this.hoveredCountry.color = COUNTRY_COLOR.DEFAULT;
 			this.hoveredCountry.isHovered = false;
-			this.drawCountry(this.hoveredCountry);
-
-			if (!hoveredCountry) {
-				this.drawCountriesBoundaries();
-				this.drawEarthBoundary();
-			}
 		}
 
 		if (hoveredCountry) {
 			this.hoveredCountry = hoveredCountry;
 			this.hoveredCountry.color = COUNTRY_COLOR.HOVERED;
 			this.hoveredCountry.isHovered = true;
-			this.drawCountry(this.hoveredCountry);
-
-			this.drawCountriesBoundaries();
-			this.drawEarthBoundary();
 		} else {
 			this.hoveredCountry = null;
 		}
+
+		this.renderCanvas();
 	};
+
+	private setCountriesPaths(): void {
+		if (this.mapProcessing) {
+			this.countries.forEach((country) => {
+				country.pathLowResolution = country.featureLowResolution
+					? new Path2D(this.pathGenerator(country.featureLowResolution))
+					: null;
+			});
+		} else {
+			this.countries.forEach((country) => {
+				country.pathHighResolution = new Path2D(this.pathGenerator(country.featureHighResolution));
+			});
+		}
+	}
 
 	private renderCanvas = (): void => {
 		this.canvasContext.clearRect(0, 0, this.width, this.height);
 
-		// Water
-		this.canvasContext.beginPath();
-		this.pathGeneratorWithContext({ type: 'Sphere' });
-		this.canvasContext.fillStyle = 'white';
-		this.canvasContext.fill();
-		this.canvasContext.closePath();
+		this.drawWater();
 
 		this.countries.forEach((country) => {
 			this.drawCountry(country);
 		});
 
-		if (!this.mapProcessing) {
-			this.drawCountriesBoundaries();
-		}
 		this.drawEarthBoundary();
 	};
+
+	private drawWater(): void {
+		this.canvasContext.beginPath();
+		this.pathGeneratorWithContext({ type: 'Sphere' });
+		this.canvasContext.fillStyle = 'white';
+		this.canvasContext.fill();
+		this.canvasContext.closePath();
+	}
 
 	private drawCountry(country: CanvasCountry): void {
 		const targetFeature = this.mapProcessing
@@ -190,40 +199,14 @@ export class Orthographic {
 		if (!targetFeature) {
 			return;
 		}
-		let targetPath: Path2D;
-
-		if (this.mapProcessing) {
-			targetPath = country.pathLowResolution = country.featureLowResolution
-				? new Path2D(this.pathGenerator(country.featureLowResolution))
-				: null;
-		} else {
-			targetPath = country.pathHighResolution = new Path2D(
-				this.pathGenerator(country.featureHighResolution)
-			);
-		}
+		const targetPath = this.mapProcessing ? country.pathLowResolution : country.pathHighResolution;
 
 		this.canvasContext.beginPath();
+		this.canvasContext.strokeStyle = 'white';
+		this.canvasContext.stroke(targetPath);
 		this.canvasContext.fillStyle = country.color;
 		this.canvasContext.fill(targetPath);
 		this.canvasContext.closePath();
-	}
-
-	private drawCountriesBoundaries(): void {
-		this.countries.forEach((country) => {
-			const targetPath = this.mapProcessing
-				? country.pathLowResolution
-				: country.pathHighResolution;
-			if (!targetPath) {
-				return;
-			}
-
-			this.canvasContext.beginPath();
-			this.canvasContext.strokeStyle = 'white';
-			this.canvasContext.stroke(targetPath);
-			this.canvasContext.fillStyle = country.color;
-			this.canvasContext.fill(targetPath);
-			this.canvasContext.closePath();
-		});
 	}
 
 	private drawEarthBoundary(): void {
