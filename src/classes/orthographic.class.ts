@@ -9,7 +9,6 @@ import {
 	type GeoProjection
 } from 'd3';
 import versor from 'versor';
-import { COUNTRY_COLOR } from '../enums/country-color.enum';
 import type { CanvasCountry } from '../interfaces/canvas-country.interface';
 import type { WorldDataset } from './world-data.class';
 import { fitProjectionSize } from '../functions/fit-projection-size';
@@ -31,6 +30,12 @@ export class Orthographic {
 		matrix: [number, number, number];
 		rotate: [number, number, number];
 	};
+
+	private sphereColor = 'darkslategray';
+	private waterColor = 'white';
+	private boundariesColor = 'white';
+	private earthColor = 'darkslategray';
+	private hoverColor = 'green';
 
 	init(canvas: HTMLCanvasElement): void {
 		this.initVariables(canvas);
@@ -58,15 +63,44 @@ export class Orthographic {
 				pathLowResolution: null,
 				pathHighResolution: null,
 				name: featureHighResolution.properties.name,
-				color: COUNTRY_COLOR.DEFAULT,
+				color: this.earthColor,
 				isHovered: false
 			};
 		});
 	}
 
-	drawMap(): void {
+	setSphereColor(color: string): void {
+		this.sphereColor = color;
+	}
+
+	setWaterColor(color: string): void {
+		this.waterColor = color;
+	}
+
+	setBoundariesColor(color: string): void {
+		this.boundariesColor = color;
+	}
+
+	setEarthColor(color: string): void {
+		this.earthColor = color;
+		this.countries.forEach((c) => (!c.isHovered ? (c.color = color) : null));
+	}
+
+	setHoverColor(color: string): void {
+		this.hoverColor = color;
+		if (!this.hoveredCountry) {
+			return;
+		}
+		this.hoveredCountry.color = color;
+	}
+
+	drawMapWithCalculations(): void {
 		fitProjectionSize(this.projection, this.width, this.height, this.worldDataset.maxResolution);
 		this.setCountriesPaths();
+		this.renderCanvas();
+	}
+
+	drawMapWithoutCalculations(): void {
 		this.renderCanvas();
 	}
 
@@ -140,13 +174,13 @@ export class Orthographic {
 		}
 
 		if (this.hoveredCountry) {
-			this.hoveredCountry.color = COUNTRY_COLOR.DEFAULT;
+			this.hoveredCountry.color = this.earthColor;
 			this.hoveredCountry.isHovered = false;
 		}
 
 		if (hoveredCountry) {
 			this.hoveredCountry = hoveredCountry;
-			this.hoveredCountry.color = COUNTRY_COLOR.HOVERED;
+			this.hoveredCountry.color = this.hoverColor;
 			this.hoveredCountry.isHovered = true;
 		} else {
 			this.hoveredCountry = null;
@@ -186,7 +220,7 @@ export class Orthographic {
 	private drawWater(): void {
 		this.canvasContext.beginPath();
 		this.pathGeneratorWithContext({ type: 'Sphere' });
-		this.canvasContext.fillStyle = 'white';
+		this.canvasContext.fillStyle = this.waterColor;
 		this.canvasContext.fill();
 		this.canvasContext.closePath();
 	}
@@ -198,7 +232,7 @@ export class Orthographic {
 		}
 
 		this.canvasContext.beginPath();
-		this.canvasContext.strokeStyle = 'white';
+		this.canvasContext.strokeStyle = this.boundariesColor;
 		this.canvasContext.stroke(targetPath);
 		this.canvasContext.fillStyle = country.color;
 		this.canvasContext.fill(targetPath);
@@ -208,7 +242,7 @@ export class Orthographic {
 	private drawEarthBoundary(): void {
 		this.canvasContext.beginPath();
 		this.pathGeneratorWithContext({ type: 'Sphere' });
-		this.canvasContext.strokeStyle = 'darkslategray';
+		this.canvasContext.strokeStyle = this.sphereColor;
 		this.canvasContext.stroke();
 		this.canvasContext.closePath();
 	}
