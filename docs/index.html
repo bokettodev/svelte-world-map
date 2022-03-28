@@ -5,7 +5,7 @@
 		<meta name="description" content="Interactive world map" />
 		<link rel="icon" href="/svelte-world-map/favicon.png" />
 		<meta name="viewport" content="width=device-width, initial-scale=1" />
-		<meta http-equiv="content-security-policy" content=""><title>World Map Interactive</title><style lang="scss" data-svelte="svelte-nm9x7n">@import url("https://fonts.googleapis.com/css?family=Roboto&display=swap");
+		<meta http-equiv="content-security-policy" content=""><title>World Map Interactive</title><style lang="scss" data-svelte="svelte-f5olo3">@import url("https://fonts.googleapis.com/css?family=Roboto&display=swap");
 :root {
   --bg-global-color: white;
   --bg-element-color: white;
@@ -13,7 +13,6 @@
   --secondary-color: transparent;
   --tertiary-color: transparent;
   --accent-color: transparent;
-  --default-indent: 12px;
 }
 
 * {
@@ -35,11 +34,11 @@ body {
   height: 100vh;
   width: 100vw;
 }</style>
-	<link rel="stylesheet" href="/svelte-world-map/_app/assets/pages/index.svelte-ccec42a4.css">
-	<link rel="modulepreload" href="/svelte-world-map/_app/start-b59c5564.js">
-	<link rel="modulepreload" href="/svelte-world-map/_app/chunks/vendor-9fac88bb.js">
-	<link rel="modulepreload" href="/svelte-world-map/_app/pages/__layout.svelte-bb7e9b03.js">
-	<link rel="modulepreload" href="/svelte-world-map/_app/pages/index.svelte-3d20b35f.js">
+	<link rel="stylesheet" href="/svelte-world-map/_app/assets/pages/index.svelte-c0e2217c.css">
+	<link rel="modulepreload" href="/svelte-world-map/_app/start-19553cfe.js">
+	<link rel="modulepreload" href="/svelte-world-map/_app/chunks/vendor-6312896e.js">
+	<link rel="modulepreload" href="/svelte-world-map/_app/pages/__layout.svelte-5c381043.js">
+	<link rel="modulepreload" href="/svelte-world-map/_app/pages/index.svelte-fb9c03e9.js">
 	</head>
 	<body>
 		
@@ -47,16 +46,31 @@ body {
 
 
 
-<div class="svelte-1v92ok3">
+<div class="svelte-10lepfb">
+
+<div class="colors svelte-wnf8xa"><div class="color svelte-wnf8xa"><p>Sphere</p>
+		<input type="color" value="#2f4f4f"></div>
+
+	<div class="color svelte-wnf8xa"><p>Water</p>
+		<input type="color" value="#ffffff"></div>
+
+	<div class="color svelte-wnf8xa"><p>Boundaries</p>
+		<input type="color" value="#ffffff"></div>
+
+	<div class="color svelte-wnf8xa"><p>Earth</p>
+		<input type="color" value="#2f4f4f"></div>
+
+	<div class="color svelte-wnf8xa"><p>Hover</p>
+		<input type="color" value="#3e9987"></div></div>
 
 <canvas></canvas>
 </div>
 
 
-		<script type="module" data-hydrate="9dp471">
-		import { start } from "/svelte-world-map/_app/start-b59c5564.js";
+		<script type="module" data-hydrate="o9f0sy">
+		import { start } from "/svelte-world-map/_app/start-19553cfe.js";
 		start({
-			target: document.querySelector('[data-hydrate="9dp471"]').parentNode,
+			target: document.querySelector('[data-hydrate="o9f0sy"]').parentNode,
 			paths: {"base":"/svelte-world-map","assets":"/svelte-world-map"},
 			session: {},
 			route: true,
@@ -66,8 +80,8 @@ body {
 				status: 200,
 				error: null,
 				nodes: [
-					import("/svelte-world-map/_app/pages/__layout.svelte-bb7e9b03.js"),
-						import("/svelte-world-map/_app/pages/index.svelte-3d20b35f.js")
+					import("/svelte-world-map/_app/pages/__layout.svelte-5c381043.js"),
+						import("/svelte-world-map/_app/pages/index.svelte-fb9c03e9.js")
 				],
 				params: {},
 				routeId: ""
