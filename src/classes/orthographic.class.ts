@@ -31,6 +31,7 @@ export class Orthographic {
 		rotate: [number, number, number];
 	};
 
+	private canvasColor = 'white';
 	private sphereColor = 'darkslategray';
 	private waterColor = 'white';
 	private boundariesColor = 'white';
@@ -67,6 +68,10 @@ export class Orthographic {
 				isHovered: false
 			};
 		});
+	}
+
+	setCanvasColor(color: string): void {
+		this.canvasColor = color;
 	}
 
 	setSphereColor(color: string): void {
@@ -206,6 +211,8 @@ export class Orthographic {
 	private renderCanvas(): void {
 		window.requestAnimationFrame(() => {
 			this.canvasContext.clearRect(0, 0, this.width, this.height);
+			this.canvasContext.fillStyle = this.canvasColor;
+			this.canvasContext.fillRect(0, 0, this.width, this.height);
 
 			this.drawWater();
 

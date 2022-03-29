@@ -11,6 +11,7 @@
 	const orthographic = new Orthographic();
 
 	let canvas: HTMLCanvasElement;
+	let canvasColor = '#cfcfcf';
 	let sphereColor = '#2f4f4f';
 	let waterColor = '#ffffff';
 	let boundariesColor = '#ffffff';
@@ -46,6 +47,7 @@
 		mapInited = true;
 		orthographic.setWorldDataset(worldDataset);
 
+		orthographic.setCanvasColor(canvasColor);
 		orthographic.setSphereColor(sphereColor);
 		orthographic.setWaterColor(waterColor);
 		orthographic.setBoundariesColor(boundariesColor);
@@ -54,6 +56,11 @@
 
 		orthographic.drawMapWithCalculations();
 	}
+
+	const onCanvasColorChange = (): void => {
+		orthographic.setCanvasColor(canvasColor);
+		orthographic.drawMapWithoutCalculations();
+	};
 
 	const onSphereColorChange = (): void => {
 		orthographic.setSphereColor(sphereColor);
@@ -84,6 +91,11 @@
 <svelte:window on:resize={onResize} />
 
 <div class="colors">
+	<div class="color">
+		<p>Background</p>
+		<input type="color" bind:value={canvasColor} on:change={onCanvasColorChange} />
+	</div>
+
 	<div class="color">
 		<p>Sphere</p>
 		<input type="color" bind:value={sphereColor} on:change={onSphereColorChange} />
