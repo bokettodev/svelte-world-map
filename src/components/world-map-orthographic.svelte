@@ -90,6 +90,8 @@
 
 <svelte:window on:resize={onResize} />
 
+<canvas bind:this={canvas} {width} {height} />
+
 <div class="colors">
 	<div class="color">
 		<p>Background</p>
@@ -122,8 +124,6 @@
 	</div>
 </div>
 
-<canvas bind:this={canvas} {width} {height} />
-
 <style lang="scss">
 	.colors {
 		position: absolute;
@@ -139,5 +139,11 @@
 		align-items: center;
 		justify-content: flex-end;
 		gap: 0.75rem;
+	}
+
+	canvas {
+		position: absolute;
+		top: 0;
+		left: 0;
 	}
 </style>
