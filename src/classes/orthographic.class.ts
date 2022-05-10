@@ -119,7 +119,7 @@ export class Orthographic {
 	private initPanAndZoomListener(): void {
 		select(this.canvasContext.canvas).call(
 			zoom()
-				.scaleExtent([1, 8])
+				.scaleExtent([0.1, 10])
 				.on('start', (event: D3ZoomEvent<HTMLCanvasElement, WorldData>) => {
 					this.processing = true;
 
