@@ -1,10 +1,10 @@
 <script lang="ts">
 	import { beforeUpdate } from 'svelte';
-	import { debounce } from '../functions/debounce';
+	import { debounce } from '../../../shared/functions/debounce';
 	import { Orthographic } from '../classes/orthographic.class';
 	import type { WorldDataset } from '../classes/world-data.class';
 
-	export let worldDataset: WorldDataset;
+	export let worldDataset: WorldDataset | null;
 	export let width: number;
 	export let height: number;
 
@@ -30,15 +30,15 @@
 		initMap();
 	});
 
-	function initOrthographic(): void {
+	const initOrthographic = (): void => {
 		if (orthographicInited || !canvas) {
 			return;
 		}
 		orthographicInited = true;
 		orthographic.init(canvas);
-	}
+	};
 
-	function initMap(): void {
+	const initMap = (): void => {
 		initOrthographic();
 		if (!orthographicInited || mapInited || !worldDataset) {
 			return;
@@ -55,7 +55,7 @@
 		orthographic.setHoverColor(hoverColor);
 
 		orthographic.drawMapWithCalculations();
-	}
+	};
 
 	const onCanvasColorChange = (): void => {
 		orthographic.setCanvasColor(canvasColor);

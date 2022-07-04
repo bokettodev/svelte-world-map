@@ -1,14 +1,14 @@
 import type { GeoProjection } from 'd3';
-import type { WorldData } from '../types/world-data.type';
+import type { WorldData } from '../../features/orthographic/types/world-data.type';
 
-export function fitProjectionSize(
+export const fitProjectionSize = (
 	projection: GeoProjection,
 	width: number,
 	height: number,
 	data: WorldData
-): void {
+): void => {
 	if (!projection || !width || !height || !data) {
 		return;
 	}
 	projection.fitSize([width, height], data);
-}
+};

@@ -9,10 +9,10 @@ import {
 	type GeoProjection
 } from 'd3';
 import versor from 'versor';
+import { fitProjectionSize } from '../../../shared/functions/fit-projection-size';
 import type { CanvasCountry } from '../interfaces/canvas-country.interface';
-import type { WorldDataset } from './world-data.class';
-import { fitProjectionSize } from '../functions/fit-projection-size';
 import type { WorldData } from '../types/world-data.type';
+import type { WorldDataset } from './world-data.class';
 
 export class Orthographic {
 	private worldDataset: WorldDataset;
