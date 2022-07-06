@@ -3,6 +3,7 @@
 	import { debounce } from '../../../shared/functions/debounce';
 	import { Orthographic } from '../classes/orthographic.class';
 	import type { WorldDataset } from '../classes/world-data.class';
+	import type { Colors } from '../interfaces/colors.interface';
 
 	export let worldDataset: WorldDataset | null;
 	export let width: number;
@@ -11,12 +12,14 @@
 	const orthographic = new Orthographic();
 
 	let canvas: HTMLCanvasElement;
-	let canvasColor = '#cfcfcf';
-	let sphereColor = '#2f4f4f';
-	let waterColor = '#ffffff';
-	let boundariesColor = '#ffffff';
-	let earthColor = '#2f4f4f';
-	let hoverColor = '#3e9987';
+	const colors: Colors = {
+		countriesBoundaries: '#ffffff',
+		canvasBackground: '#cfcfcf',
+		earth: '#2f4f4f',
+		countryHover: '#3e9987',
+		sphereBoundary: '#2f4f4f',
+		water: '#ffffff'
+	};
 
 	let orthographicInited = false;
 	let mapInited = false;
@@ -47,43 +50,13 @@
 		mapInited = true;
 		orthographic.setWorldDataset(worldDataset);
 
-		orthographic.setCanvasColor(canvasColor);
-		orthographic.setSphereColor(sphereColor);
-		orthographic.setWaterColor(waterColor);
-		orthographic.setBoundariesColor(boundariesColor);
-		orthographic.setEarthColor(earthColor);
-		orthographic.setHoverColor(hoverColor);
+		orthographic.setColors(colors);
 
 		orthographic.drawMapWithCalculations();
 	};
 
-	const onCanvasColorChange = (): void => {
-		orthographic.setCanvasColor(canvasColor);
-		orthographic.drawMapWithoutCalculations();
-	};
-
-	const onSphereColorChange = (): void => {
-		orthographic.setSphereColor(sphereColor);
-		orthographic.drawMapWithoutCalculations();
-	};
-
-	const onWaterColorChange = (): void => {
-		orthographic.setWaterColor(waterColor);
-		orthographic.drawMapWithoutCalculations();
-	};
-
-	const onBoundariesColorChange = (): void => {
-		orthographic.setBoundariesColor(boundariesColor);
-		orthographic.drawMapWithoutCalculations();
-	};
-
-	const onEarthColorChange = (): void => {
-		orthographic.setEarthColor(earthColor);
-		orthographic.drawMapWithoutCalculations();
-	};
-
-	const onHoverColorChange = (): void => {
-		orthographic.setHoverColor(hoverColor);
+	const onColorChange = (): void => {
+		orthographic.setColors(colors);
 		orthographic.drawMapWithoutCalculations();
 	};
 </script>
@@ -95,32 +68,32 @@
 <div class="colors">
 	<div class="color">
 		<p>Background</p>
-		<input type="color" bind:value={canvasColor} on:change={onCanvasColorChange} />
+		<input type="color" bind:value={colors.canvasBackground} on:change={onColorChange} />
 	</div>
 
 	<div class="color">
 		<p>Sphere</p>
-		<input type="color" bind:value={sphereColor} on:change={onSphereColorChange} />
+		<input type="color" bind:value={colors.sphereBoundary} on:change={onColorChange} />
 	</div>
 
 	<div class="color">
 		<p>Water</p>
-		<input type="color" bind:value={waterColor} on:change={onWaterColorChange} />
+		<input type="color" bind:value={colors.water} on:change={onColorChange} />
 	</div>
 
 	<div class="color">
 		<p>Boundaries</p>
-		<input type="color" bind:value={boundariesColor} on:change={onBoundariesColorChange} />
+		<input type="color" bind:value={colors.countriesBoundaries} on:change={onColorChange} />
 	</div>
 
 	<div class="color">
 		<p>Earth</p>
-		<input type="color" bind:value={earthColor} on:change={onEarthColorChange} />
+		<input type="color" bind:value={colors.earth} on:change={onColorChange} />
 	</div>
 
 	<div class="color">
 		<p>Hover</p>
-		<input type="color" bind:value={hoverColor} on:change={onHoverColorChange} />
+		<input type="color" bind:value={colors.countryHover} on:change={onColorChange} />
 	</div>
 </div>
 

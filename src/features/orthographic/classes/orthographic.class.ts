@@ -10,7 +10,13 @@ import {
 } from 'd3';
 import versor from 'versor';
 import { fitProjectionSize } from '../../../shared/functions/fit-projection-size';
+import { drawCanvas } from '../functions/draw-canvas.function';
+import { drawCountries } from '../functions/draw-countries.function';
+import { drawEarthBoundary } from '../functions/draw-earth-boundary.function';
+import { drawWater } from '../functions/draw-water.function';
+import { worldFatasetToCountries } from '../functions/world-dataset-to-countries.function';
 import type { CanvasCountry } from '../interfaces/canvas-country.interface';
+import type { Colors } from '../interfaces/colors.interface';
 import type { WorldData } from '../types/world-data.type';
 import type { WorldDataset } from './world-data.class';
 
@@ -31,12 +37,22 @@ export class Orthographic {
 		rotate: [number, number, number];
 	};
 
-	private canvasColor = 'white';
-	private sphereColor = 'darkslategray';
-	private waterColor = 'white';
-	private boundariesColor = 'white';
-	private earthColor = 'darkslategray';
-	private hoverColor = 'green';
+	private colors: Colors = {
+		countriesBoundaries: 'white',
+		canvasBackground: 'darkslategray',
+		earth: 'darkslategray',
+		countryHover: 'green',
+		sphereBoundary: 'darkslategray',
+		water: 'white'
+	};
+
+	private get width(): number {
+		return this.canvasContext.canvas.width;
+	}
+
+	private get height(): number {
+		return this.canvasContext.canvas.height;
+	}
 
 	init(canvas: HTMLCanvasElement): void {
 		this.initVariables(canvas);
@@ -53,50 +69,17 @@ export class Orthographic {
 		}
 
 		this.worldDataset = worldDataset;
-		this.countries = this.worldDataset.maxResolution.features.map((featureHighResolution) => {
-			const featureLowResolution = this.worldDataset.minResolution.features.find(
-				(f) => f.properties.name === featureHighResolution.properties.name
-			);
-
-			return {
-				featureLowResolution,
-				featureHighResolution,
-				pathLowResolution: null,
-				pathHighResolution: null,
-				name: featureHighResolution.properties.name,
-				color: this.earthColor,
-				isHovered: false
-			};
-		});
+		this.countries = worldFatasetToCountries({ worldDataset, countriesColor: this.colors.earth });
 	}
 
-	setCanvasColor(color: string): void {
-		this.canvasColor = color;
-	}
-
-	setSphereColor(color: string): void {
-		this.sphereColor = color;
-	}
-
-	setWaterColor(color: string): void {
-		this.waterColor = color;
-	}
-
-	setBoundariesColor(color: string): void {
-		this.boundariesColor = color;
-	}
-
-	setEarthColor(color: string): void {
-		this.earthColor = color;
-		this.countries.forEach((c) => (!c.isHovered ? (c.color = color) : null));
-	}
-
-	setHoverColor(color: string): void {
-		this.hoverColor = color;
-		if (!this.hoveredCountry) {
-			return;
+	setColors(colors: Partial<Colors>): void {
+		if (colors.earth !== this.colors.earth) {
+			this.countries.forEach((c) => (!c.isHovered ? (c.color = colors.earth) : null));
 		}
-		this.hoveredCountry.color = color;
+		if (colors.countryHover !== this.colors.countryHover && this.hoveredCountry) {
+			this.hoveredCountry.color = colors.countryHover;
+		}
+		Object.assign(this.colors, colors);
 	}
 
 	drawMapWithCalculations(): void {
@@ -179,13 +162,13 @@ export class Orthographic {
 		}
 
 		if (this.hoveredCountry) {
-			this.hoveredCountry.color = this.earthColor;
+			this.hoveredCountry.color = this.colors.earth;
 			this.hoveredCountry.isHovered = false;
 		}
 
 		if (hoveredCountry) {
 			this.hoveredCountry = hoveredCountry;
-			this.hoveredCountry.color = this.hoverColor;
+			this.hoveredCountry.color = this.colors.countryHover;
 			this.hoveredCountry.isHovered = true;
 		} else {
 			this.hoveredCountry = null;
@@ -210,55 +193,31 @@ export class Orthographic {
 
 	private renderCanvas(): void {
 		window.requestAnimationFrame(() => {
-			this.canvasContext.clearRect(0, 0, this.width, this.height);
-			this.canvasContext.fillStyle = this.canvasColor;
-			this.canvasContext.fillRect(0, 0, this.width, this.height);
-
-			this.drawWater();
-
-			this.countries.forEach((country) => {
-				this.drawCountry(country);
+			drawCanvas({
+				context: this.canvasContext,
+				width: this.width,
+				height: this.height,
+				fillColor: this.colors.canvasBackground
 			});
 
-			this.drawEarthBoundary();
+			drawWater({
+				context: this.canvasContext,
+				pathGenerator: this.pathGeneratorWithContext,
+				fillColor: this.colors.water
+			});
+
+			drawCountries({
+				context: this.canvasContext,
+				countries: this.countries,
+				strokeColor: this.colors.countriesBoundaries,
+				lowResolution: this.processing
+			});
+
+			drawEarthBoundary({
+				context: this.canvasContext,
+				pathGenerator: this.pathGeneratorWithContext,
+				strokeColor: this.colors.sphereBoundary
+			});
 		});
-	}
-
-	private drawWater(): void {
-		this.canvasContext.beginPath();
-		this.pathGeneratorWithContext({ type: 'Sphere' });
-		this.canvasContext.fillStyle = this.waterColor;
-		this.canvasContext.fill();
-		this.canvasContext.closePath();
-	}
-
-	private drawCountry(country: CanvasCountry): void {
-		const targetPath = this.processing ? country.pathLowResolution : country.pathHighResolution;
-		if (!targetPath) {
-			return;
-		}
-
-		this.canvasContext.beginPath();
-		this.canvasContext.strokeStyle = this.boundariesColor;
-		this.canvasContext.stroke(targetPath);
-		this.canvasContext.fillStyle = country.color;
-		this.canvasContext.fill(targetPath);
-		this.canvasContext.closePath();
-	}
-
-	private drawEarthBoundary(): void {
-		this.canvasContext.beginPath();
-		this.pathGeneratorWithContext({ type: 'Sphere' });
-		this.canvasContext.strokeStyle = this.sphereColor;
-		this.canvasContext.stroke();
-		this.canvasContext.closePath();
-	}
-
-	private get width(): number {
-		return this.canvasContext.canvas.width;
-	}
-
-	private get height(): number {
-		return this.canvasContext.canvas.height;
 	}
 }
