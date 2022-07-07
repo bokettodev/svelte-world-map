@@ -1,8 +1,8 @@
 <script lang="ts">
+	import type { WorldDataset } from '@features/orthographic/classes';
+	import WorldMapOrthographic from '@features/orthographic/components/world-map-orthographic.svelte';
+	import { getWorldDataset } from '@features/orthographic/functions';
 	import { onMount } from 'svelte';
-	import type { WorldDataset } from '../classes/world-data.class';
-	import { getWorldDataset } from '../functions/get-world-dataset.function';
-	import WorldMapOrthographic from './world-map-orthographic.svelte';
 
 	let width: number;
 	let height: number;

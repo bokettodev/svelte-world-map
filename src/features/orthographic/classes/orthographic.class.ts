@@ -1,3 +1,14 @@
+import type { WorldDataset } from '@features/orthographic/classes/world-data.class';
+import {
+	drawCanvas,
+	drawCountries,
+	drawEarthBoundary,
+	drawWater,
+	worldFatasetToCountries
+} from '@features/orthographic/functions';
+import type { CanvasCountry, Colors } from '@features/orthographic/interfaces';
+import type { WorldData } from '@features/orthographic/types';
+import { fitProjectionSize } from '@shared';
 import {
 	geoOrthographic,
 	geoPath,
@@ -9,16 +20,6 @@ import {
 	type GeoProjection
 } from 'd3';
 import versor from 'versor';
-import { fitProjectionSize } from '../../../shared/functions/fit-projection-size';
-import { drawCanvas } from '../functions/draw-canvas.function';
-import { drawCountries } from '../functions/draw-countries.function';
-import { drawEarthBoundary } from '../functions/draw-earth-boundary.function';
-import { drawWater } from '../functions/draw-water.function';
-import { worldFatasetToCountries } from '../functions/world-dataset-to-countries.function';
-import type { CanvasCountry } from '../interfaces/canvas-country.interface';
-import type { Colors } from '../interfaces/colors.interface';
-import type { WorldData } from '../types/world-data.type';
-import type { WorldDataset } from './world-data.class';
 
 export class Orthographic {
 	private worldDataset: WorldDataset;

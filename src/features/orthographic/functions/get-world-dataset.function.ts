@@ -1,7 +1,7 @@
+import { WorldDataset } from '@features/orthographic/classes';
+import type { TopoJson } from '@features/orthographic/types';
 import { json } from 'd3';
 import * as topojson from 'topojson-client';
-import { WorldDataset } from '../classes/world-data.class';
-import type { TopoJson } from '../types/topo-json.type';
 
 export const getWorldDataset = async (): Promise<WorldDataset | null> => {
 	try {

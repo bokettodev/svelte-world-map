@@ -1,9 +1,8 @@
 <script lang="ts">
+	import { Orthographic, WorldDataset } from '@features/orthographic/classes';
+	import type { Colors } from '@features/orthographic/interfaces';
+	import { debounce } from '@shared';
 	import { beforeUpdate } from 'svelte';
-	import { debounce } from '../../../shared/functions/debounce';
-	import { Orthographic } from '../classes/orthographic.class';
-	import type { WorldDataset } from '../classes/world-data.class';
-	import type { Colors } from '../interfaces/colors.interface';
 
 	export let worldDataset: WorldDataset | null;
 	export let width: number;

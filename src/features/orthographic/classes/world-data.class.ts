@@ -1,4 +1,4 @@
-import type { WorldData } from '../types/world-data.type';
+import type { WorldData } from '@features/orthographic/types';
 
 export class WorldDataset {
 	constructor(public lowResolution: WorldData, public highResolution: WorldData) {}

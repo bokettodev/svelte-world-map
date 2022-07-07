@@ -1,5 +1,5 @@
-import type { WorldDataset } from '../classes/world-data.class';
-import type { CanvasCountry } from '../interfaces/canvas-country.interface';
+import type { WorldDataset } from '@features/orthographic/classes';
+import type { CanvasCountry } from '@features/orthographic/interfaces';
 
 export const worldFatasetToCountries = ({
 	worldDataset,

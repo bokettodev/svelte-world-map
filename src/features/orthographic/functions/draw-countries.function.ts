@@ -1,4 +1,4 @@
-import type { CanvasCountry } from '../interfaces/canvas-country.interface';
+import type { CanvasCountry } from '@features/orthographic/interfaces';
 
 export const drawCountries = ({
 	context,
